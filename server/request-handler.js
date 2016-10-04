@@ -52,54 +52,37 @@ var requestHandler = function(request, response) {
 
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
-
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
   headers['Content-Type'] = 'text/plain';
 
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-  
-
-  // Make sure to always call response.end() - Node may not send
-  // anything back to the client until you do. The string you pass to
-  // response.end() will be the body of the response - i.e. what shows
-  // up in the browser.
-  //
-  // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client
-  if (request.url === '/classes/messages' && (request.method === 'GET' || request.method === 'POST')) {
+  if (request.url === '/classes/messages' && (request.method) === 'GET') {
+    statusCode = 200;
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify({results: allMsg}));
+  } else if (request.url === '/classes/messages' && (request.method) === 'POST') {
     var body = []; 
-    console.log(request);
+    var result = {};
+    var bodyParsed;
     request.on('data', function(chunk) {
+      console.log('chunk', chunk);
       body.push(chunk);
-    }).on('end', function() {
+    });
+    request.on('end', function() {
       body = Buffer.concat(body).toString();
 
       try {
-        var bodyParsed = JSON.parse(body);
+        bodyParsed = JSON.parse(body);
       } catch (e) {
-        console.log('malformed request', body);
+        console.log('malformed request');
       } 
 
-      var result = {};
-      var responseContent;
-      // var bodyParsed = JSON.parse(body);
-      if (request.method === 'POST') {
-        statusCode = 201;
-        result.username = bodyParsed.username;
-        result.message = bodyParsed.message;
-        result.roomname = bodyParsed.roomname;
-        allMsg.push(result);
-        response.writeHead(statusCode, headers);
-        response.end('POST succeeded');
-      } else if (request.method === 'GET') {
-        statusCode = 200;
-        response.writeHead(statusCode, headers);
-        response.end(JSON.stringify({results: allMsg}));
-      }
+      console.log(bodyParsed);
+      result.username = bodyParsed.username;
+      result.message = bodyParsed.message;
+      result.roomname = bodyParsed.roomname;
+      allMsg.push(result);
+      statusCode = 201;
+      response.writeHead(statusCode, headers);
+      response.end('POST succeeded');
     });
   } else {
     response.writeHead(statusCode, headers);
