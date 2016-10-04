@@ -1,3 +1,4 @@
+var stubs = require('./spec/Stubs');
 /*************************************************************
 
 You should implement your request handler function in this file.
@@ -11,6 +12,9 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var allMsg = [];
+var msgByRoom = {};
+var msgByUser = {};
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -28,9 +32,23 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-
+  var statusCode = 404;
   // The outgoing status.
-  var statusCode = 200;
+
+
+    // allMsg.push(result);
+    
+    // if (result.roomname !== undefined) {
+    //   if (!msgByRoom[result.roomname]) {
+    //     msgByRoom[result.roomname] = [];
+    //   } 
+    //   msgByRoom[result.roomname].push(result);
+    // }
+
+    // if (!msgByUser[result.username]) {
+    //   msgByUser[result.username] = [];
+    // } 
+    // msgByUser[result.username].push(result);
 
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
@@ -43,7 +61,7 @@ var requestHandler = function(request, response) {
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+  
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -51,8 +69,42 @@ var requestHandler = function(request, response) {
   // up in the browser.
   //
   // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client.
-  response.end('Hello, World!');
+  // node to actually send all the data over to the client
+  if (request.url === '/classes/messages' && (request.method === 'GET' || request.method === 'POST')) {
+    var body = []; 
+    console.log(request);
+    request.on('data', function(chunk) {
+      body.push(chunk);
+    }).on('end', function() {
+      body = Buffer.concat(body).toString();
+
+      try {
+        var bodyParsed = JSON.parse(body);
+      } catch (e) {
+        console.log('malformed request', body);
+      } 
+
+      var result = {};
+      var responseContent;
+      // var bodyParsed = JSON.parse(body);
+      if (request.method === 'POST') {
+        statusCode = 201;
+        result.username = bodyParsed.username;
+        result.message = bodyParsed.message;
+        result.roomname = bodyParsed.roomname;
+        allMsg.push(result);
+        response.writeHead(statusCode, headers);
+        response.end('POST succeeded');
+      } else if (request.method === 'GET') {
+        statusCode = 200;
+        response.writeHead(statusCode, headers);
+        response.end(JSON.stringify({results: allMsg}));
+      }
+    });
+  } else {
+    response.writeHead(statusCode, headers);
+    response.end('POST failed');
+  }
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -71,3 +123,4 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
+exports.requestHandler = requestHandler;
