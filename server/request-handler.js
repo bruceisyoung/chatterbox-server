@@ -63,19 +63,24 @@ var requestHandler = function(request, response) {
     var result = {};
     var bodyParsed;
     request.on('data', function(chunk) {
-      console.log('chunk', chunk);
+      // body = chunk.toString();
       body.push(chunk);
+      console.log('before', body);
+      body = Buffer.concat(body).toString();
+      console.log('after', body);
     });
     request.on('end', function() {
-      body = Buffer.concat(body).toString();
+      
 
-      try {
-        bodyParsed = JSON.parse(body);
-      } catch (e) {
-        console.log('malformed request');
-      } 
 
-      console.log(bodyParsed);
+      bodyParsed = JSON.parse(body);
+      // console.log(body);
+      // try {
+        
+      // } catch (e) {
+      //   console.log('malformed request');
+      // } 
+
       result.username = bodyParsed.username;
       result.message = bodyParsed.message;
       result.roomname = bodyParsed.roomname;
